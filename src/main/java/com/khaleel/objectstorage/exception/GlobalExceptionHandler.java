@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class GlobalExceptionHandler {
 
     //404 - not found
-    @ExceptionHandler({BucketNotFoundException.class, ObjectNotfoundException.class})
+    @ExceptionHandler({BucketNotFoundException.class, ObjectNotfoundException.class, UserNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex){
         ErrorResponse error = ErrorResponse.builder()
                 .statusCode(HttpStatus.NOT_FOUND.value())
@@ -22,8 +22,8 @@ public class GlobalExceptionHandler {
     }
 
     //409 - duplicate name(conflict)
-    @ExceptionHandler(BucketAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleConflict(BucketAlreadyExistsException ex){
+    @ExceptionHandler({BucketAlreadyExistsException.class, UserAlreadyExistsException.class, ObjectAlreadyExistsException.class})
+    public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex){
         ErrorResponse error = ErrorResponse.builder()
                 .statusCode(HttpStatus.CONFLICT.value())
                 .message(ex.getMessage())
