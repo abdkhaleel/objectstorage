@@ -1,4 +1,4 @@
-package com.khaleel.objectstorage.controllers;
+package com.khaleel.objectstorage.controller;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

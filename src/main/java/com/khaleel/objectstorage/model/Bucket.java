@@ -1,5 +1,6 @@
 package com.khaleel.objectstorage.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,9 +26,12 @@ public class Bucket {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
+    @JsonIgnore
+    @ToString.Exclude
     private User owner;
 
     @OneToMany(mappedBy = "bucket", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private List<FileMetadata> files;
 
     @PrePersist

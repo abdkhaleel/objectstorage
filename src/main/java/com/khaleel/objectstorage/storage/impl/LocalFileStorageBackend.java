@@ -1,20 +1,23 @@
 package com.khaleel.objectstorage.storage.impl;
 
 import com.khaleel.objectstorage.storage.StorageBackend;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 @Component
 public class LocalFileStorageBackend implements StorageBackend {
     private final Path rootLocation;
 
-    public LocalFileStorageBackend(Path rootLocation) {
-        this.rootLocation = rootLocation;
+
+    public LocalFileStorageBackend(@Value("storage-data") String path) {
+        this.rootLocation = Paths.get(path);
     }
     private void init(){
         try{

@@ -36,22 +36,32 @@ public class ObjectServiceImpl implements ObjectService {
 
     @Override
     @Transactional
-    public FileMetadata uploadFile(String bucketName, MultipartFile file, Long userId) throws IOException {
+    public FileMetadata uploadFile(String bucketName, MultipartFile file, Long userId)  {
+
+        System.out.println("Calling upload file");
 
         Bucket bucket = bucketRepository.findByBucketName(bucketName).orElseThrow(() -> new BucketNotFoundException("Bucket does not exists.."));
 
+        System.out.println("Ran query..");
+        System.out.println("Checking for valid user");
         if(!bucket.getOwner().getId().equals(userId)){
             throw new UnAuthorizedUserException("Access Denied: You do not own this bucket");
         }
-
-        if(fileMetadataRepository.findByBucketAndFileName(bucketName, file.getOriginalFilename()).isPresent()){
+        System.out.println("Checking for duplicate file");
+        if(fileMetadataRepository.findByBucketAndFileName(bucket, file.getOriginalFilename()).isPresent()){
             throw new ObjectAlreadyExistsException("File with this name already inside this bucket");
         }
-
+        System.out.println("Generating physical name");
         String physicalName = UUID.randomUUID().toString();
 
-        storageBackend.save(bucketName, physicalName, file.getInputStream(), file.getSize());
-
+        try {
+            System.out.println("Trying to store in file system");
+            storageBackend.save(bucketName, physicalName, file.getInputStream(), file.getSize());
+            System.out.println("Stored Successfully");
+        } catch (IOException e) {
+            throw new RuntimeException("Upload failed " + e);
+        }
+        System.out.println("Storing meta data");
         FileMetadata fileMetadata = FileMetadata.builder()
                 .bucket(bucket)
                 .fileName(file.getOriginalFilename())
@@ -68,7 +78,7 @@ public class ObjectServiceImpl implements ObjectService {
     public Resource downloadFile(String bucketName, String fileName, Long userId) {
         Bucket bucket = bucketRepository.findByBucketName(bucketName).orElseThrow(() -> new BucketNotFoundException("Bucket does not exists"));
 
-        FileMetadata fileMetadata = fileMetadataRepository.findByBucketAndFileName(bucketName, fileName).orElseThrow(() -> new ObjectNotfoundException("File does not exists in this bucket"));
+        FileMetadata fileMetadata = fileMetadataRepository.findByBucketAndFileName(bucket, fileName).orElseThrow(() -> new ObjectNotfoundException("File does not exists in this bucket"));
 
         if(!bucket.getOwner().getId().equals(userId)){
             throw new UnAuthorizedUserException("Access denied: you do not own this bucket");
@@ -97,17 +107,18 @@ public class ObjectServiceImpl implements ObjectService {
     public void deleteFile(String bucketName, String fileName, Long userId) {
         Bucket bucket = bucketRepository.findByBucketName(bucketName).orElseThrow(() -> new BucketNotFoundException("Bucket does not exists"));
 
-        FileMetadata fileMetadata = fileMetadataRepository.findByBucketAndFileName(bucketName, fileName).orElseThrow(() -> new ObjectNotfoundException("File does not exists in this bucket"));
+        FileMetadata fileMetadata = fileMetadataRepository.findByBucketAndFileName(bucket, fileName).orElseThrow(() -> new ObjectNotfoundException("File does not exists in this bucket"));
 
         if(!bucket.getOwner().getId().equals(userId)){
             throw new UnAuthorizedUserException("Access denied: you do not own this bucket");
         }
-
+        fileMetadataRepository.delete(fileMetadata);
         try{
             storageBackend.delete(bucketName, fileMetadata.getPhysicalName());
         } catch (IOException e) {
             throw new RuntimeException("Failed to delete file", e);
         }
+        fileMetadataRepository.delete(fileMetadata);
     }
 
 
