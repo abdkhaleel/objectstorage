@@ -1,8 +1,10 @@
 package com.khaleel.objectstorage.controller;
 
+import com.khaleel.objectstorage.dto.CreateBucketRequest;
 import com.khaleel.objectstorage.model.Bucket;
 import com.khaleel.objectstorage.security.SecurityUser;
 import com.khaleel.objectstorage.service.BucketService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +22,10 @@ public class BucketController {
     }
 
     @PostMapping
-    public ResponseEntity<Bucket> createBucket(@RequestParam String bucketName, @AuthenticationPrincipal SecurityUser user) {
+    public ResponseEntity<Bucket> createBucket(@RequestBody @Valid CreateBucketRequest bucketRequest, @AuthenticationPrincipal SecurityUser user) {
         Long userId = user.getId();
 
-        Bucket bucket = bucketService.createBucket(bucketName, userId);
+        Bucket bucket = bucketService.createBucket(bucketRequest.getBucketName(), userId);
         return ResponseEntity.ok(bucket);
     }
 
