@@ -19,7 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,7 +38,7 @@ public class ObjectServiceImpl implements ObjectService {
 
     @Override
     @Transactional
-    public FileMetadata uploadFile(String bucketName, MultipartFile file, Long userId)  {
+    public FileMetadata uploadFile(String bucketName, MultipartFile file, Long userId) throws IOException  {
 
         System.out.println("Calling upload file");
 
@@ -48,8 +50,25 @@ public class ObjectServiceImpl implements ObjectService {
             throw new UnAuthorizedUserException("Access Denied: You do not own this bucket");
         }
         System.out.println("Checking for duplicate file");
-        if(fileMetadataRepository.findByBucketAndFileName(bucket, file.getOriginalFilename()).isPresent()){
-            throw new ObjectAlreadyExistsException("File with this name already inside this bucket");
+        Optional<FileMetadata> existingFile = fileMetadataRepository.findByBucketAndFileName(bucket, file.getOriginalFilename());
+        if(existingFile.isPresent()){
+//            throw new ObjectAlreadyExistsException("File with this name already inside this bucket");
+            System.out.println("File already exist..\n REPLACING THE CONTENT..");
+            FileMetadata oldMetadata = existingFile.get();
+
+            //deleting old file from disk
+            storageBackend.delete(bucketName, oldMetadata.getPhysicalName());
+
+            //update
+            String newPhysicalName = UUID.randomUUID().toString();
+            storageBackend.save(bucketName, newPhysicalName, file.getInputStream(), file.getSize());
+
+            oldMetadata.setPhysicalName(newPhysicalName);
+            oldMetadata.setSize(file.getSize());
+            oldMetadata.setContentType(file.getContentType());
+            oldMetadata.setUploadedAt(LocalDateTime.now());
+
+            return fileMetadataRepository.save(oldMetadata);
         }
         System.out.println("Generating physical name");
         String physicalName = UUID.randomUUID().toString();
