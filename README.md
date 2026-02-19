@@ -200,4 +200,4 @@ We welcome contributions to improve this project. Feel free to fork this reposit
 
 ## License
 
-This project is licensed under the [MIT License](https://github.com/abdkhaleel/objectstorage/blob/master/LICENSE.md).
+This project is licensed under the [MIT License]([https://github.com/abdkhaleel/objectstorage/blob/master/LICENSE.md](https://github.com/abdkhaleel/objectstorage?tab=MIT-1-ov-file)).
